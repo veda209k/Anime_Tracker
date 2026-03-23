@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Devesh's Otaku Tracker</title>
+<style>
+  :root {
+    --bg: #0d0d14;
+    --bg2: #13131f;
+    --bg3: #1a1a2e;
+    --card: #16213e;
+    --card-hover: #1e2d50;
+    --border: rgba(255,255,255,0.08);
+    --border-hover: rgba(99,179,237,0.4);
+    --text: #e2e8f0;
+    --text-muted: #8892a4;
+    --text-dim: #4a5568;
+    --accent: #6366f1;
+    --accent2: #818cf8;
+    --gold: #f6c90e;
+    --green: #48bb78;
+    --red: #f56565;
+    --orange: #ed8936;
+    --pink: #ed64a6;
+    --teal: #38b2ac;
+    --purple: #9f7aea;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, #0d0d14 0%, #1a1a2e 50%, #16213e 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo-icon {
+    width: 42px; height: 42px;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .logo-text h1 { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.3px; }
+  .logo-text span { font-size: 0.75rem; color: var(--text-muted); }
+
+  .stats-bar {
+    display: flex; gap: 1.5rem;
+  }
+  .stat-pill {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 0.8rem;
+  }
+  .stat-pill strong { color: var(--accent2); font-size: 1rem; }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    padding: 1rem 2rem 0;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+  }
+  .tab {
+    padding: 0.65rem 1.5rem;
+    border-radius: 8px 8px 0 0;
+    border: 1px solid transparent;
+    border-bottom: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    white-space: nowrap;
+    display: flex; align-items: center; gap: 8px;
+    color: var(--text-muted);
+    background: transparent;
+  }
+  .tab:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+  .tab.active {
+    color: var(--text);
+    background: var(--bg3);
+    border-color: var(--border);
+    border-bottom-color: var(--bg3);
+  }
+  .tab .count {
+    background: rgba(99,102,241,0.2);
+    color: var(--accent2);
+    border-radius: 10px;
+    padding: 1px 8px;
+    font-size: 0.75rem;
+  }
+  .tab.active .count { background: var(--accent); color: white; }
+
+  /* CONTROLS */
+  .controls {
+    padding: 1.2rem 2rem;
+    background: var(--bg2);
+    display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  }
+  .search-box {
+    flex: 1; min-width: 200px; max-width: 360px;
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+  }
+  .search-box input {
+    background: transparent; border: none; outline: none;
+    color: var(--text); font-size: 0.9rem; width: 100%;
+  }
+  .search-box input::placeholder { color: var(--text-dim); }
+  .search-icon { color: var(--text-muted); font-size: 14px; }
+
+  .filter-group { display: flex; gap: 6px; flex-wrap: wrap; }
+  .filter-btn {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.15s;
+  }
+  .filter-btn:hover { border-color: var(--accent); color: var(--accent2); }
+  .filter-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+  .sort-select {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-size: 0.85rem;
+    cursor: pointer;
+    outline: none;
+  }
+
+  /* CONTENT */
+  .content {
+    padding: 1.5rem 2rem 3rem;
+    background: var(--bg);
+    min-height: 60vh;
+  }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* GRID */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 16px;
+  }
+
+  /* CARD */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    border-color: var(--border-hover);
+    box-shadow: 0 12px 32px rgba(99,102,241,0.15);
+  }
+  .card-img {
+    width: 100%;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+    display: block;
+    background: var(--bg3);
+  }
+  .card-img-placeholder {
+    width: 100%;
+    aspect-ratio: 2/3;
+    background: linear-gradient(135deg, var(--bg3), var(--card));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem;
+    color: var(--text-dim);
+  }
+  .card-body {
+    padding: 10px 10px 12px;
+  }
+  .card-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.3;
+    margin-bottom: 6px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .card-meta {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 4px;
+  }
+  .rating {
+    display: flex; align-items: center; gap: 3px;
+    font-size: 0.75rem; font-weight: 600; color: var(--gold);
+  }
+  .rating .star { font-size: 11px; }
+  .badge {
+    font-size: 0.65rem;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+  }
+  .badge-completed { background: rgba(72,187,120,0.18); color: #68d391; border: 1px solid rgba(72,187,120,0.25); }
+  .badge-ongoing   { background: rgba(99,102,241,0.18); color: #818cf8; border: 1px solid rgba(99,102,241,0.25); }
+  .badge-dropped   { background: rgba(245,101,101,0.18); color: #fc8181; border: 1px solid rgba(245,101,101,0.25); }
+  .badge-movie     { background: rgba(237,100,166,0.18); color: #f687b3; border: 1px solid rgba(237,100,166,0.25); }
+  .badge-not-read  { background: rgba(113,128,150,0.18); color: #a0aec0; border: 1px solid rgba(113,128,150,0.25); }
+  .badge-read      { background: rgba(56,178,172,0.18); color: #4fd1c5; border: 1px solid rgba(56,178,172,0.25); }
+
+  .year-tag {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    background: rgba(255,255,255,0.05);
+    border-radius: 4px;
+    padding: 1px 5px;
+  }
+
+  .card-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(0deg, rgba(13,13,20,0.97) 0%, rgba(13,13,20,0.2) 55%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.2s;
+    padding: 12px;
+    display: flex; flex-direction: column; justify-content: flex-end;
+  }
+  .card:hover .card-overlay { opacity: 1; }
+  .overlay-title { font-size: 0.78rem; font-weight: 600; margin-bottom: 4px; }
+  .overlay-desc { font-size: 0.7rem; color: var(--text-muted); line-height: 1.4;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .overlay-studio { font-size: 0.65rem; color: var(--accent2); margin-top: 4px; }
+
+  /* MODAL */
+  .modal-bg {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 1000;
+    align-items: center; justify-content: center;
+    padding: 1rem;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    max-width: 560px; width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal-img-wrap { position: relative; }
+  .modal-img {
+    width: 100%; height: 240px;
+    object-fit: cover; object-position: top;
+    border-radius: 16px 16px 0 0;
+    display: block;
+  }
+  .modal-close {
+    position: absolute; top: 12px; right: 12px;
+    background: rgba(0,0,0,0.6);
+    border: none; border-radius: 50%;
+    width: 32px; height: 32px;
+    cursor: pointer; color: white; font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .modal-close:hover { background: rgba(0,0,0,0.9); }
+  .modal-body { padding: 1.25rem 1.5rem 1.5rem; }
+  .modal-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; }
+  .modal-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .modal-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px; margin-bottom: 14px;
+  }
+  .modal-field { font-size: 0.8rem; }
+  .modal-field label { color: var(--text-muted); display: block; margin-bottom: 2px; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  .modal-field span { color: var(--text); font-weight: 500; }
+  .modal-desc {
+    font-size: 0.83rem; color: var(--text-muted); line-height: 1.6;
+    border-top: 1px solid var(--border);
+    padding-top: 12px; margin-top: 4px;
+  }
+  .stars-display { color: var(--gold); font-size: 1rem; }
+
+  /* EMPTY */
+  .empty {
+    text-align: center; padding: 4rem 2rem;
+    color: var(--text-muted);
+  }
+  .empty .emoji { font-size: 3rem; margin-bottom: 1rem; }
+
+  /* LN CARDS */
+  .ln-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  .ln-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .ln-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--border-hover);
+    box-shadow: 0 12px 32px rgba(99,102,241,0.15);
+  }
+  .ln-img {
+    width: 100%; aspect-ratio: 2/3;
+    object-fit: cover;
+    display: block;
+    background: var(--bg3);
+  }
+  .ln-img-placeholder {
+    width: 100%; aspect-ratio: 2/3;
+    background: linear-gradient(135deg, #1a1a2e, #2d1b69);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 8px; color: var(--text-dim);
+  }
+  .ln-img-placeholder .book-icon { font-size: 2.5rem; }
+  .ln-body { padding: 12px; }
+  .ln-title { font-size: 0.85rem; font-weight: 600; color: var(--text); line-height: 1.3; }
+  .ln-sub { font-size: 0.72rem; color: var(--purple); margin-top: 4px; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+
+  /* SECTION HEADING */
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.2rem;
+  }
+  .section-header h2 { font-size: 1rem; font-weight: 600; color: var(--text-muted); }
+  .section-header span { font-size: 0.8rem; color: var(--text-dim); }
+
+  @media (max-width: 640px) {
+    .header { padding: 1rem; flex-wrap: wrap; gap: 12px; }
+    .stats-bar { display: none; }
+    .controls { padding: 1rem; }
+    .content { padding: 1rem; }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+    .tabs { padding: 0.75rem 1rem 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">⛩</div>
+    <div class="logo-text">
+      <h1>Devesh's Otaku Tracker</h1>
+      <span>Personal Anime · Manhwa · Light Novel List</span>
+    </div>
+  </div>
+  <div class="stats-bar" id="statsBar"></div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('anime', this)">
+    <span>🎌</span> Anime <span class="count" id="anime-count">0</span>
+  </div>
+  <div class="tab" onclick="switchTab('manhwa', this)">
+    <span>📖</span> Manhwa / Manga <span class="count" id="manhwa-count">0</span>
+  </div>
+  <div class="tab" onclick="switchTab('ln', this)">
+    <span>📚</span> Light Novels <span class="count" id="ln-count">0</span>
+  </div>
+</div>
+
+<div class="controls">
+  <div class="search-box">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="Search titles..." oninput="applyFilters()">
+  </div>
+  <div class="filter-group" id="filterGroup"></div>
+  <select class="sort-select" id="sortSelect" onchange="applyFilters()">
+    <option value="default">Default Order</option>
+    <option value="rating-desc">Rating ↓</option>
+    <option value="rating-asc">Rating ↑</option>
+    <option value="title">Title A–Z</option>
+    <option value="year-desc">Newest First</option>
+  </select>
+</div>
+
+<div class="content">
+  <div class="section active" id="anime-section">
+    <div class="section-header">
+      <h2 id="anime-label">All Anime</h2>
+      <span id="anime-showing"></span>
+    </div>
+    <div class="grid" id="anime-grid"></div>
+  </div>
+  <div class="section" id="manhwa-section">
+    <div class="section-header">
+      <h2 id="manhwa-label">All Manhwa / Manga</h2>
+      <span id="manhwa-showing"></span>
+    </div>
+    <div class="grid" id="manhwa-grid"></div>
+  </div>
+  <div class="section" id="ln-section">
+    <div class="section-header">
+      <h2 id="ln-label">Light Novels</h2>
+      <span id="ln-showing"></span>
+    </div>
+    <div class="ln-grid" id="ln-grid"></div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-bg" id="modalBg" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <div class="modal-img-wrap">
+      <img class="modal-img" id="modal-img" src="" alt="">
+      <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-title" id="modal-title"></div>
+      <div class="modal-badges" id="modal-badges"></div>
+      <div class="modal-grid" id="modal-grid"></div>
+      <div class="modal-desc" id="modal-desc"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ANIME_DATA = [
+  {id:1,title:"Violet Evergarden",studio:"Kyoto Animation",seasons:"1",episodes:"13+1OVA",year:"2018",rating:5,completed:true,isMovie:false,desc:""},
+  {id:2,title:"Tokyo Revengers",studio:"Liden Films",seasons:"1+2+3",episodes:"24+13+13",year:"2021",rating:3,completed:false,isMovie:false,desc:""},
+  {id:3,title:"Days",studio:"MAPPA",seasons:"1",episodes:"24+5OVA",year:"2016",rating:3,completed:false,isMovie:false,desc:"Football anime about a boy who practices day and night to become the best player and go to Nationals."},
+  {id:4,title:"Violet Evergarden: Eternity & Auto Memory Doll",studio:"Kyoto Animation",seasons:"M",episodes:"1",year:"2019",rating:5,completed:true,isMovie:true,desc:""},
+  {id:5,title:"Violet Evergarden: The Movie",studio:"Kyoto Animation",seasons:"M",episodes:"1",year:"2020",rating:4,completed:true,isMovie:true,desc:""},
+  {id:6,title:"Jujutsu Kaisen",studio:"MAPPA",seasons:"1+2+M",episodes:"24+23+13",year:"2020",rating:4,completed:false,isMovie:false,desc:""},
+  {id:7,title:"Demon Slayer",studio:"Ufotable",seasons:"1+2+3+4",episodes:"26+18+11+8",year:"2019",rating:4,completed:false,isMovie:false,desc:""},
+  {id:8,title:"Death Note",studio:"Madhouse",seasons:"1",episodes:"37",year:"2006",rating:5,completed:true,isMovie:false,desc:""},
+  {id:9,title:"Monster",studio:"Madhouse",seasons:"1",episodes:"74",year:"2004",rating:5,completed:true,isMovie:false,desc:""},
+  {id:10,title:"Fruit of Grisaia",studio:"Eight Bit",seasons:"1+2",episodes:"12+12",year:"2014",rating:3,completed:false,isMovie:false,desc:""},
+  {id:11,title:"Rascal Does Not Dream of Bunny Girl Senpai",studio:"CloverWorks",seasons:"1+2",episodes:"13+13",year:"2018",rating:4,completed:true,isMovie:false,desc:""},
+  {id:12,title:"Rascal Does Not Dream of a Dreaming Girl",studio:"CloverWorks",seasons:"M",episodes:"1",year:"2019",rating:5,completed:true,isMovie:true,desc:""},
+  {id:13,title:"Rascal Does Not Dream of a Sister Venturing Out",studio:"CloverWorks",seasons:"M",episodes:"1",year:"2023",rating:4,completed:true,isMovie:true,desc:""},
+  {id:15,title:"Classroom of the Elite",studio:"Lerche",seasons:"1+2+3",episodes:"12+13+13",year:"2017",rating:5,completed:false,isMovie:false,desc:""},
+  {id:16,title:"Spy x Family",studio:"Wit Studio & CloverWorks",seasons:"1+2+3",episodes:"25+12+12",year:"2022",rating:3,completed:false,isMovie:false,desc:""},
+  {id:17,title:"Spy x Family Code: White",studio:"Wit Studio & CloverWorks",seasons:"M",episodes:"1",year:"2023",rating:3,completed:true,isMovie:true,desc:""},
+  {id:19,title:"One Punch Man",studio:"Madhouse/J.C.Staff",seasons:"1+2+3",episodes:"12+12",year:"2015",rating:4,completed:false,isMovie:false,desc:""},
+  {id:21,title:"Lycoris Recoil",studio:"A-1 Pictures",seasons:"1",episodes:"13",year:"2022",rating:4,completed:true,isMovie:false,desc:""},
+  {id:22,title:"Attack on Titan",studio:"Wit Studio / MAPPA",seasons:"1+2+3+4",episodes:"25+12+22+16+12",year:"2013",rating:5,completed:true,isMovie:false,desc:""},
+  {id:26,title:"Parasyte: The Maxim",studio:"Madhouse",seasons:"1",episodes:"24",year:"2014",rating:4,completed:true,isMovie:false,desc:""},
+  {id:27,title:"Run with the Wind",studio:"Production I.G",seasons:"1",episodes:"23",year:"2018",rating:4,completed:true,isMovie:false,desc:""},
+  {id:28,title:"Vinland Saga",studio:"Wit Studio / MAPPA",seasons:"1+2",episodes:"24+24",year:"2019",rating:5,completed:false,isMovie:false,desc:""},
+  {id:30,title:"Orange",studio:"Telecom Animation Film",seasons:"1",episodes:"13",year:"2016",rating:4,completed:true,isMovie:false,desc:""},
+  {id:32,title:"The Eminence in Shadow",studio:"Nexus",seasons:"1+2",episodes:"20+12",year:"2022",rating:4,completed:false,isMovie:false,desc:""},
+  {id:33,title:"Mashle: Magic and Muscles",studio:"A-1 Pictures",seasons:"1+2",episodes:"12+12",year:"2023",rating:3,completed:true,isMovie:false,desc:""},
+  {id:34,title:"Solo Leveling",studio:"A-1 Pictures",seasons:"1+2",episodes:"12+13",year:"2024",rating:5,completed:false,isMovie:false,desc:""},
+  {id:36,title:"Oregairu (My Teen Romantic Comedy SNAFU)",studio:"Brain's Base",seasons:"1+2+3",episodes:"13+13+12",year:"2013",rating:4,completed:true,isMovie:false,desc:""},
+  {id:40,title:"Chainsaw Man",studio:"MAPPA",seasons:"1",episodes:"12",year:"2022",rating:3,completed:false,isMovie:false,desc:""},
+  {id:44,title:"Your Name",studio:"CoMix Wave Films",seasons:"M",episodes:"1",year:"2016",rating:5,completed:true,isMovie:true,desc:""},
+  {id:45,title:"Weathering with You",studio:"CoMix Wave Films",seasons:"M",episodes:"1",year:"2020",rating:4,completed:true,isMovie:true,desc:""},
+  {id:46,title:"A Silent Voice",studio:"Kyoto Animation",seasons:"M",episodes:"1",year:"2016",rating:4,completed:true,isMovie:true,desc:""},
+  {id:47,title:"Suzume",studio:"CoMix Wave Films",seasons:"M",episodes:"1",year:"2022",rating:4,completed:true,isMovie:true,desc:""},
+  {id:50,title:"Grave of the Fireflies",studio:"Studio Ghibli",seasons:"M",episodes:"1",year:"1988",rating:5,completed:true,isMovie:true,desc:""},
+  {id:51,title:"Spirited Away",studio:"Studio Ghibli",seasons:"M",episodes:"1",year:"2001",rating:4,completed:true,isMovie:true,desc:""},
+  {id:54,title:"The Misfit of Demon King Academy",studio:"Silver Link",seasons:"1+2",episodes:"13+12",year:"2020",rating:5,completed:false,isMovie:false,desc:""},
+  {id:56,title:"Code Geass: Lelouch of the Rebellion",studio:"Sunrise",seasons:"1+2",episodes:"25+25",year:"2006",rating:5,completed:true,isMovie:false,desc:""},
+  {id:57,title:"Code Geass: Akito the Exiled",studio:"Sunrise",seasons:"1",episodes:"5",year:"2012",rating:4,completed:true,isMovie:false,desc:""},
+  {id:58,title:"Code Geass: Lelouch of the Re;surrection",studio:"Sunrise",seasons:"M",episodes:"1",year:"2019",rating:5,completed:true,isMovie:true,desc:""},
+  {id:65,title:"Link Click",studio:"LAN Studio",seasons:"1+2",episodes:"11+12+8",year:"2021",rating:5,completed:false,isMovie:false,desc:""},
+  {id:66,title:"Pluto",studio:"Studio M2",seasons:"1",episodes:"8",year:"2023",rating:5,completed:false,isMovie:false,desc:""},
+  {id:67,title:"Hyouka",studio:"Kyoto Animation",seasons:"1",episodes:"22+1OVA",year:"2012",rating:5,completed:true,isMovie:false,desc:""},
+  {id:68,title:"Terror in Resonance",studio:"MAPPA",seasons:"1",episodes:"11",year:"2014",rating:5,completed:true,isMovie:false,desc:""},
+  {id:69,title:"Steins;Gate",studio:"White Fox",seasons:"1",episodes:"24",year:"2011",rating:5,completed:true,isMovie:false,desc:""},
+  {id:70,title:"Steins;Gate 0",studio:"White Fox",seasons:"1",episodes:"23+1OVA",year:"2018",rating:5,completed:true,isMovie:false,desc:""},
+  {id:71,title:"Steins;Gate: The Movie",studio:"White Fox",seasons:"M",episodes:"1",year:"2013",rating:5,completed:true,isMovie:true,desc:""},
+  {id:72,title:"Lookism",studio:"Studio Mir",seasons:"1",episodes:"8",year:"2022",rating:4,completed:false,isMovie:false,desc:""},
+  {id:73,title:"Viral Hit: How to Fight",studio:"Okuruto Noboru",seasons:"1",episodes:"12",year:"2024",rating:4,completed:false,isMovie:false,desc:""},
+  {id:74,title:"Parallel World Pharmacy",studio:"Diomedéa",seasons:"1",episodes:"12",year:"2022",rating:5,completed:false,isMovie:false,desc:""},
+  {id:75,title:"That Time I Got Reincarnated as a Slime",studio:"Eight Bit",seasons:"1+2+3",episodes:"24+24+24",year:"2018",rating:4,completed:false,isMovie:false,desc:""},
+  {id:79,title:"Mushoku Tensei: Jobless Reincarnation",studio:"Studio Bind",seasons:"1+2",episodes:"23+25",year:"2021",rating:4,completed:false,isMovie:false,desc:""},
+  {id:87,title:"Bubble",studio:"Wit Studio",seasons:"M",episodes:"1",year:"2022",rating:5,completed:true,isMovie:true,desc:""},
+  {id:90,title:"Moriarty the Patriot",studio:"Production I.G",seasons:"1",episodes:"24+2OVA",year:"2020",rating:5,completed:true,isMovie:false,desc:""},
+  {id:97,title:"A Returner's Magic Should Be Special",studio:"Arvo Animation",seasons:"1",episodes:"12",year:"2023",rating:4,completed:true,isMovie:false,desc:""},
+  {id:100,title:"The Irregular at Magic High School",studio:"Madhouse / Eight Bit",seasons:"1+2+3",episodes:"26+13+13",year:"2014",rating:5,completed:false,isMovie:false,desc:""},
+  {id:111,title:"Blue Lock",studio:"Eight Bit",seasons:"1",episodes:"24",year:"2022",rating:4,completed:false,isMovie:false,desc:""},
+  {id:122,title:"Blast of Tempest",studio:"Bones",seasons:"1",episodes:"24",year:"2012",rating:4,completed:false,isMovie:false,desc:""},
+  {id:123,title:"Haikyu!!",studio:"Production I.G",seasons:"1+2+3+4",episodes:"25+25+60+12",year:"2014",rating:4,completed:true,isMovie:false,desc:""},
+  {id:129,title:"Sword Art Online",studio:"A-1 Pictures",seasons:"1+2",episodes:"25+24",year:"2012",rating:4,completed:true,isMovie:false,desc:""},
+  {id:137,title:"Maboroshi",studio:"MAPPA",seasons:"M",episodes:"1",year:"2023",rating:4,completed:true,isMovie:true,desc:""},
+  {id:148,title:"The Apothecary Diaries",studio:"Toho Animation Studio",seasons:"1+2",episodes:"24+24",year:"2023",rating:5,completed:false,isMovie:false,desc:""},
+  {id:150,title:"Kaiju No. 8",studio:"Production I.G",seasons:"1+2",episodes:"12+12",year:"2024",rating:4,completed:false,isMovie:false,desc:""},
+  {id:153,title:"Look Back",studio:"Studio Durian",seasons:"M",episodes:"1",year:"2024",rating:4,completed:true,isMovie:true,desc:""},
+  {id:156,title:"Hello World",studio:"Graphinica",seasons:"M",episodes:"1",year:"2019",rating:5,completed:true,isMovie:true,desc:""},
+  {id:157,title:"Serial Experiments Lain",studio:"Triangle Staff",seasons:"1",episodes:"13",year:"1998",rating:5,completed:true,isMovie:false,desc:""},
+  {id:158,title:"Irina: The Vampire Cosmonaut",studio:"Arvo Animation",seasons:"1",episodes:"12",year:"2021",rating:4,completed:true,isMovie:false,desc:""},
+  {id:161,title:"Another",studio:"P.A. Works",seasons:"1",episodes:"12+1OVA",year:"2012",rating:4,completed:true,isMovie:false,desc:""},
+  {id:164,title:"ReLIFE",studio:"TMS Entertainment",seasons:"1",episodes:"13+4OVA",year:"2016",rating:3,completed:true,isMovie:false,desc:""},
+  {id:165,title:"Erased",studio:"A-1 Pictures",seasons:"1",episodes:"12",year:"2017",rating:4,completed:true,isMovie:false,desc:""},
+  {id:171,title:"Paprika",studio:"Madhouse",seasons:"M",episodes:"1",year:"2006",rating:5,completed:true,isMovie:true,desc:""},
+  {id:175,title:"Angel Beats!",studio:"P.A. Works",seasons:"1",episodes:"13+2OVA",year:"2010",rating:3,completed:true,isMovie:false,desc:""},
+  {id:183,title:"Remake Our Life!",studio:"Feel",seasons:"1",episodes:"12",year:"2021",rating:4,completed:true,isMovie:false,desc:""},
+  {id:185,title:"Psycho-Pass",studio:"Production I.G",seasons:"1+2+3+M",episodes:"22+11+8+3",year:"2012",rating:5,completed:true,isMovie:false,desc:""},
+  {id:188,title:"Lord of the Mysteries",studio:"B.CMay PICTURES",seasons:"1",episodes:"13",year:"2025",rating:5,completed:false,isMovie:false,desc:""},
+  {id:197,title:"Orb: On the Movements of the Earth",studio:"Madhouse",seasons:"1",episodes:"25",year:"2024",rating:5,completed:false,isMovie:false,desc:""},
+  {id:199,title:"Ron Kamonohashi's Forbidden Deductions",studio:"Diomedéa",seasons:"1+2",episodes:"26",year:"2023",rating:5,completed:false,isMovie:false,desc:""},
+  {id:201,title:"Just Because!",studio:"Pine Jam",seasons:"1",episodes:"12",year:"2017",rating:5,completed:true,isMovie:false,desc:"Love Polygon, School setting. Very nice anime."},
+  {id:206,title:"Uzumaki",studio:"Fugaku",seasons:"1",episodes:"4",year:"2024",rating:4,completed:true,isMovie:false,desc:"Horror, Supernatural"},
+  {id:210,title:"Noblesse",studio:"Production I.G",seasons:"1+OVA",episodes:"13+1+1",year:"2020",rating:4,completed:true,isMovie:false,desc:""},
+  {id:212,title:"Hajime no Ippo",studio:"Madhouse",seasons:"1+2+3",episodes:"76+26+25",year:"2000",rating:5,completed:true,isMovie:false,desc:""},
+  {id:216,title:"Whisper of the Heart",studio:"Studio Ghibli",seasons:"M",episodes:"1",year:"1995",rating:4,completed:true,isMovie:true,desc:"Song: Country Road"},
+  {id:217,title:"Princess Mononoke",studio:"Studio Ghibli",seasons:"M",episodes:"1",year:"1997",rating:5,completed:true,isMovie:true,desc:""},
+  {id:218,title:"The Wind Rises",studio:"Studio Ghibli",seasons:"M",episodes:"1",year:"2013",rating:5,completed:true,isMovie:true,desc:""},
+  {id:220,title:"Howl's Moving Castle",studio:"Studio Ghibli",seasons:"M",episodes:"1",year:"2004",rating:5,completed:true,isMovie:true,desc:""},
+  {id:224,title:"My Neighbor Totoro",studio:"Studio Ghibli",seasons:"M",episodes:"1",year:"1988",rating:4,completed:true,isMovie:true,desc:""},
+  {id:225,title:"The Boy and the Heron",studio:"Studio Ghibli",seasons:"M",episodes:"1",year:"2023",rating:4,completed:true,isMovie:true,desc:""},
+  {id:229,title:"Tokyo Ghoul",studio:"Pierrot",seasons:"1+2+3",episodes:"12+12+24",year:"2014",rating:4,completed:true,isMovie:false,desc:""},
+  {id:234,title:"Re:Zero - Starting Life in Another World",studio:"White Fox",seasons:"1+2+3",episodes:"25+25+16",year:"2016",rating:4,completed:false,isMovie:false,desc:"One of the best light-novel based anime. Story about Natsuki Subaru who can use the ability 'Return by Death'."},
+  {id:239,title:"Free! - Iwatobi Swim Club",studio:"Kyoto Animation",seasons:"1+2+3",episodes:"12+13+12",year:"2013",rating:4,completed:true,isMovie:false,desc:""},
+  {id:241,title:"Perfect Blue",studio:"Madhouse",seasons:"M",episodes:"1",year:"1998",rating:4,completed:true,isMovie:true,desc:"Can be considered a Masterpiece, but the story is too mature. Beware of it!"},
+  {id:246,title:"Ergo Proxy",studio:"Manglobe",seasons:"1",episodes:"23",year:"2006",rating:5,completed:true,isMovie:false,desc:""},
+  {id:247,title:"Alderamin on the Sky",studio:"Madhouse",seasons:"1",episodes:"13",year:"2016",rating:4,completed:false,isMovie:false,desc:""},
+  {id:253,title:"To Be Hero X",studio:"LAN Studio",seasons:"1",episodes:"24",year:"2025",rating:4,completed:false,isMovie:false,desc:"Stunning Animation."},
+  {id:259,title:"Wolf Children",studio:"Studio Chizu",seasons:"M",episodes:"1",year:"2012",rating:5,completed:true,isMovie:true,desc:""},
+  {id:260,title:"Sakamoto Days",studio:"TMS Entertainment",seasons:"1",episodes:"11+12",year:"2024",rating:4,completed:false,isMovie:false,desc:"3.5 stars."},
+  {id:261,title:"Dandadan",studio:"Science Saru",seasons:"1+2",episodes:"12+12",year:"2024",rating:4,completed:false,isMovie:false,desc:"4 stars."},
+  {id:286,title:"Takopi's Original Sin",studio:"Enishiya",seasons:"1",episodes:"6",year:"2025",rating:4,completed:true,isMovie:false,desc:""},
+  {id:287,title:"Dusk Beyond the End of the World",studio:"P.A. Works",seasons:"1",episodes:"12+",year:"2025",rating:4,completed:false,isMovie:false,desc:""},
+];
+
+const MANHWA_DATA = [
+  {id:1,title:"One Punch Man",origin:"Manga",status:"On hiatus",readStatus:"Read completely",rating:4,where:""},
+  {id:2,title:"Solo Leveling",origin:"Manhwa",status:"Ended",readStatus:"Read completely",rating:4,where:"Google Drive"},
+  {id:3,title:"20th Century Boys",origin:"Manga",status:"Ended",readStatus:"Read Partially",rating:4,where:""},
+  {id:4,title:"Classroom of the Elite",origin:"Manga",status:"Ongoing",readStatus:"Read completely",rating:4,where:""},
+  {id:5,title:"Revenge of the Iron-Blooded Sword Hound",origin:"Manhwa",status:"Ongoing",readStatus:"Read completely",rating:5,where:"Reaper Scans"},
+  {id:6,title:"The Bully-in-Charge",origin:"Manhwa",status:"Ongoing",readStatus:"Read completely",rating:4,where:""},
+  {id:7,title:"Viral Hit",origin:"Manhwa",status:"Ended",readStatus:"Read Partially",rating:4,where:"Webtoon"},
+  {id:8,title:"Lookism",origin:"Manhwa",status:"Ongoing",readStatus:"Read Partially",rating:4,where:"Webtoon"},
+  {id:9,title:"Juvenile Law",origin:"Manhwa",status:"On hiatus",readStatus:"Read completely",rating:4,where:"Vortex Scans"},
+  {id:16,title:"Solo Leveling: Ragnarok",origin:"Manhwa",status:"On hiatus",readStatus:"Read completely",rating:4,where:"Reaper Scans"},
+  {id:17,title:"Omniscient Reader's Viewpoint",origin:"Manhwa",status:"Ongoing",readStatus:"Not Read yet",rating:4,where:""},
+  {id:21,title:"The Beginning After The End",origin:"Manhwa",status:"Ongoing",readStatus:"Not Read yet",rating:4,where:""},
+  {id:22,title:"A Ghostly Song",origin:"Manhwa",status:"Ongoing",readStatus:"Read completely",rating:4,where:"EzManga"},
+  {id:24,title:"A Returner's Magic Should Be Special",origin:"Manhwa",status:"Ended",readStatus:"Read Partially",rating:4,where:""},
+  {id:25,title:"Wistoria: Wand and Sword",origin:"Manga",status:"Ongoing",readStatus:"Read Partially",rating:4,where:""},
+  {id:27,title:"Regressing as the Reincarnated Bastard of the Sword Clan",origin:"Manhwa",status:"On hiatus",readStatus:"Read completely",rating:4,where:"Reaper Scans"},
+  {id:35,title:"I Killed an Academy Player",origin:"Manhwa",status:"Ongoing",readStatus:"Read completely",rating:4,where:"manhuafast.net"},
+  {id:39,title:"Swordmaster's Youngest Son",origin:"Manhwa",status:"Ongoing",readStatus:"Read completely",rating:4,where:"reaperscans"},
+  {id:40,title:"Infinite Mage",origin:"Manhwa",status:"Ongoing",readStatus:"Read completely",rating:4,where:""},
+  {id:42,title:"Trauma Center: Golden Hour",origin:"Manhwa",status:"Ended",readStatus:"",rating:5,where:"Naver Webtoons"},
+  {id:45,title:"Killer Peter",origin:"Manhwa",status:"On hiatus",readStatus:"Read completely",rating:4,where:"mgeko.cc"},
+  {id:48,title:"Lord of the Mysteries",origin:"Webnovel/Manhua",status:"Ongoing",readStatus:"Read completely",rating:5,where:""},
+  {id:50,title:"Mercenary Enrollment",origin:"Manhwa",status:"Ongoing",readStatus:"Read completely",rating:5,where:""},
+  {id:51,title:"The Extra's Academy Survival Guide",origin:"Manhwa",status:"Ongoing",readStatus:"Read completely",rating:4,where:""},
+  {id:52,title:"The Reborn Young Lord is an Assassin",origin:"Manhwa",status:"Ongoing",readStatus:"Read completely",rating:4,where:""},
+  {id:53,title:"Damn Reincarnation",origin:"Manhwa",status:"Dropped by studio",readStatus:"Read completely",rating:4,where:""},
+  {id:10,title:"The Villainess Match is Too Perfect",origin:"Manhwa",status:"Ongoing",readStatus:"Read completely",rating:3,where:"Shojo Scans"},
+  {id:11,title:"Why I Quit Being the Demon King",origin:"Manhwa",status:"Ongoing",readStatus:"Read completely",rating:3,where:""},
+  {id:12,title:"Hunter Academy's Strongest Battle God",origin:"Manhwa",status:"Ongoing",readStatus:"Read completely",rating:3,where:""},
+  {id:26,title:"Reincarnation of the Swordmaster",origin:"Manhwa",status:"Ongoing",readStatus:"Read completely",rating:3,where:"Manga Galaxy"},
+  {id:38,title:"Reincarnated as a Genius Prodigy of a Prestigious Family",origin:"Manhwa",status:"Ongoing",readStatus:"Read completely",rating:3,where:"reaperscans"},
+  {id:49,title:"Questism",origin:"Manhwa",status:"Ended",readStatus:"Read completely",rating:3,where:""},
+  {id:54,title:"Artifact Devouring Player",origin:"Manhwa",status:"Ongoing",readStatus:"Read completely",rating:3,where:""},
+  {id:55,title:"The Silent Transfer Student",origin:"Manhwa",status:"Ongoing",readStatus:"Read completely",rating:3,where:""},
+  {id:57,title:"The Art of Reincarnation",origin:"Manhwa",status:"Ongoing",readStatus:"Read completely",rating:3,where:"Comick.io"},
+  {id:58,title:"Blink Master of the Magic Academy",origin:"Manhwa",status:"Ongoing",readStatus:"Read completely",rating:3,where:"comick.io"},
+  {id:37,title:"Dao of the Bizarre Immortal",origin:"Manhua",status:"Ongoing",readStatus:"Read Partially",rating:3,where:""},
+  {id:47,title:"He was reincarnated into a mastermind family but became independent",origin:"Manga",status:"Ongoing",readStatus:"Read completely",rating:2,where:""},
+  {id:30,title:"Daxia Swordsman",origin:"Manhua",status:"Ongoing",readStatus:"Dropped",rating:1,where:""},
+];
+
+const LN_DATA = [
+  {id:1,title:"Classroom of the Elite",author:"Syougo Kinugasa"},
+  {id:2,title:"The Eminence in Shadow",author:"Daisuke Aizawa"},
+  {id:3,title:"The Misfit of the Demon King Academy",author:"Shu"},
+  {id:4,title:"That Time I Got Reincarnated as a Slime",author:"Fuse"},
+  {id:5,title:"Sherlock Holmes",author:"Arthur Conan Doyle"},
+  {id:6,title:"Lord of the Mysteries",author:"Cuttlefish That Loves Diving"},
+  {id:7,title:"Revenge of the Iron-Blooded Sword Hound",author:""},
+];
+
+// Image cache
+const imgCache = {};
+
+async function fetchAnimeImg(title) {
+  if (imgCache[title]) return imgCache[title];
+  try {
+    const q = encodeURIComponent(title);
+    const r = await fetch(`https://api.jikan.moe/v4/anime?q=${q}&limit=1&sfw=true`);
+    const d = await r.json();
+    if (d.data && d.data[0]) {
+      const url = d.data[0].images?.jpg?.large_image_url || d.data[0].images?.jpg?.image_url || '';
+      imgCache[title] = url;
+      return url;
+    }
+  } catch(e) {}
+  return '';
+}
+
+async function fetchMangaImg(title) {
+  if (imgCache['m_'+title]) return imgCache['m_'+title];
+  try {
+    const q = encodeURIComponent(title);
+    const r = await fetch(`https://api.jikan.moe/v4/manga?q=${q}&limit=1`);
+    const d = await r.json();
+    if (d.data && d.data[0]) {
+      const url = d.data[0].images?.jpg?.large_image_url || d.data[0].images?.jpg?.image_url || '';
+      imgCache['m_'+title] = url;
+      return url;
+    }
+  } catch(e) {}
+  return '';
+}
+
+// State
+let currentTab = 'anime';
+let currentFilter = 'all';
+let currentSearch = '';
+let currentSort = 'default';
+
+function starsHTML(r) {
+  let s = '';
+  for(let i=1;i<=5;i++) {
+    s += `<span style="color:${i<=r?'#f6c90e':'#2d3748'}">★</span>`;
+  }
+  return s;
+}
+
+function getBadgeHTML(item, type) {
+  if (type === 'anime') {
+    if (item.isMovie) return '<span class="badge badge-movie">Movie</span>';
+    if (item.completed) return '<span class="badge badge-completed">Completed</span>';
+    return '<span class="badge badge-ongoing">Ongoing</span>';
+  }
+  if (type === 'manhwa') {
+    if (item.readStatus === 'Read completely') return '<span class="badge badge-read">Read</span>';
+    if (item.readStatus === 'Read Partially') return '<span class="badge badge-ongoing">Partial</span>';
+    if (item.readStatus === 'Dropped') return '<span class="badge badge-dropped">Dropped</span>';
+    return '<span class="badge badge-not-read">Not Read</span>';
+  }
+  return '';
+}
+
+function createCard(item, type, imgUrl) {
+  const div = document.createElement('div');
+  div.className = 'card';
+  const ratingNum = item.rating || 0;
+
+  const imgHTML = imgUrl
+    ? `<img class="card-img" src="${imgUrl}" alt="${item.title}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+    : '';
+  const placeholderHTML = `<div class="card-img-placeholder" style="${imgUrl?'display:none':''}">📺</div>`;
+
+  const desc = item.desc || '';
+  const studio = item.studio || item.origin || '';
+  const year = item.year || '';
+
+  div.innerHTML = `
+    ${imgHTML}
+    ${placeholderHTML}
+    <div class="card-overlay">
+      <div class="overlay-title">${item.title}</div>
+      ${desc ? `<div class="overlay-desc">${desc}</div>` : ''}
+      ${studio ? `<div class="overlay-studio">${studio}</div>` : ''}
+    </div>
+    <div class="card-body">
+      <div class="card-title">${item.title}</div>
+      <div class="card-meta">
+        ${ratingNum > 0 ? `<div class="rating"><span class="star">★</span>${ratingNum}</div>` : '<div></div>'}
+        <div style="display:flex;gap:4px;align-items:center">
+          ${year ? `<span class="year-tag">${year}</span>` : ''}
+          ${getBadgeHTML(item, type)}
+        </div>
+      </div>
+    </div>
+  `;
+
+  div.onclick = () => openModal(item, type, imgUrl);
+  return div;
+}
+
+async function openModal(item, type, existingImg) {
+  const modal = document.getElementById('modal');
+  const bg = document.getElementById('modalBg');
+
+  document.getElementById('modal-title').textContent = item.title;
+  document.getElementById('modal-desc').textContent = item.desc || (type === 'ln' ? 'Light Novel' : '');
+  if (!item.desc && type !== 'ln') document.getElementById('modal-desc').style.display = 'none';
+  else document.getElementById('modal-desc').style.display = '';
+
+  // Badges
+  const badgesEl = document.getElementById('modal-badges');
+  badgesEl.innerHTML = getBadgeHTML(item, type);
+  if (type === 'anime' && item.isMovie) {} // already set
+  if (item.origin) badgesEl.innerHTML += `<span class="badge badge-ongoing">${item.origin}</span>`;
+  if (item.status) badgesEl.innerHTML += `<span class="badge badge-read">${item.status}</span>`;
+
+  // Rating stars
+  if (item.rating) {
+    badgesEl.innerHTML += `<span style="font-size:0.9rem">${starsHTML(item.rating)}</span>`;
+  }
+
+  // Grid fields
+  const gridEl = document.getElementById('modal-grid');
+  gridEl.innerHTML = '';
+  const fields = [];
+  if (type === 'anime') {
+    if (item.studio) fields.push(['Studio', item.studio]);
+    if (item.year) fields.push(['Year', item.year]);
+    if (item.episodes) fields.push(['Episodes', item.episodes]);
+    if (item.seasons) fields.push(['Seasons', item.seasons]);
+  } else if (type === 'manhwa') {
+    if (item.origin) fields.push(['Type', item.origin]);
+    if (item.status) fields.push(['Status', item.status]);
+    if (item.readStatus) fields.push(['Read Status', item.readStatus]);
+    if (item.where) fields.push(['Where to Read', item.where]);
+  } else {
+    if (item.author) fields.push(['Author', item.author]);
+  }
+  fields.forEach(([label, val]) => {
+    const d = document.createElement('div');
+    d.className = 'modal-field';
+    d.innerHTML = `<label>${label}</label><span>${val}</span>`;
+    gridEl.appendChild(d);
+  });
+
+  // Image
+  const modalImg = document.getElementById('modal-img');
+  if (existingImg) {
+    modalImg.src = existingImg;
+    modalImg.style.display = 'block';
+  } else {
+    modalImg.style.display = 'none';
+    // try fetch
+    let url = '';
+    if (type === 'anime') url = await fetchAnimeImg(item.title);
+    else if (type === 'manhwa') url = await fetchMangaImg(item.title);
+    else url = await fetchAnimeImg(item.title);
+    if (url) { modalImg.src = url; modalImg.style.display = 'block'; }
+  }
+
+  bg.classList.add('open');
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modalBg')) closeModalDirect();
+}
+function closeModalDirect() {
+  document.getElementById('modalBg').classList.remove('open');
+}
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModalDirect(); });
+
+// Render queue with rate limiting
+const renderQueues = { anime: [], manhwa: [], ln: [] };
+
+async function renderSection(type, data) {
+  const gridId = type + '-grid';
+  const grid = document.getElementById(gridId);
+  grid.innerHTML = '';
+
+  // Render cards without images first
+  const cards = data.map(item => {
+    const card = createCard(item, type, '');
+    grid.appendChild(card);
+    return { card, item };
+  });
+
+  // Then fetch images with delay to respect API rate limits
+  let i = 0;
+  for (const { card, item } of cards) {
+    await new Promise(r => setTimeout(r, i * 350)); // stagger requests
+    i++;
+    let url = '';
+    try {
+      if (type === 'anime') url = await fetchAnimeImg(item.title);
+      else url = await fetchMangaImg(item.title);
+    } catch(e) {}
+    if (url) {
+      const oldImg = card.querySelector('.card-img');
+      const placeholder = card.querySelector('.card-img-placeholder');
+      if (oldImg) {
+        oldImg.src = url;
+        oldImg.style.display = 'block';
+        if (placeholder) placeholder.style.display = 'none';
+      } else {
+        const img = document.createElement('img');
+        img.className = 'card-img';
+        img.src = url;
+        img.alt = item.title;
+        img.loading = 'lazy';
+        img.onerror = function() { this.style.display='none'; if(placeholder)placeholder.style.display='flex'; };
+        card.insertBefore(img, card.firstChild);
+        if (placeholder) placeholder.style.display = 'none';
+      }
+      imgCache[type==='anime' ? item.title : 'm_'+item.title] = url;
+      // Update onclick with new url
+      card.onclick = () => openModal(item, type, url);
+    }
+  }
+}
+
+function renderLN() {
+  const grid = document.getElementById('ln-grid');
+  grid.innerHTML = '';
+  LN_DATA.forEach(async item => {
+    const div = document.createElement('div');
+    div.className = 'ln-card';
+    div.innerHTML = `
+      <div class="ln-img-placeholder" id="ln-ph-${item.id}">
+        <div class="book-icon">📖</div>
+        <div style="font-size:0.7rem;color:var(--text-muted);text-align:center;padding:0 8px">${item.title}</div>
+      </div>
+      <div class="ln-body">
+        <div class="ln-title">${item.title}</div>
+        ${item.author ? `<div class="ln-sub">by ${item.author}</div>` : ''}
+      </div>
+    `;
+    grid.appendChild(div);
+    div.onclick = () => openModal(item, 'ln', imgCache[item.title] || '');
+
+    // Try fetching image
+    let url = await fetchAnimeImg(item.title);
+    if (!url) url = await fetchMangaImg(item.title);
+    if (url) {
+      imgCache[item.title] = url;
+      const ph = div.querySelector('.ln-img-placeholder');
+      const img = document.createElement('img');
+      img.className = 'ln-img';
+      img.src = url;
+      img.alt = item.title;
+      img.loading = 'lazy';
+      if (ph) ph.replaceWith(img);
+      div.onclick = () => openModal(item, 'ln', url);
+    }
+    await new Promise(r => setTimeout(r, 400));
+  });
+}
+
+function applyFilters() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const sort = document.getElementById('sortSelect').value;
+  currentSearch = search;
+  currentSort = sort;
+
+  if (currentTab === 'anime') filterAndRenderAnime();
+  else if (currentTab === 'manhwa') filterAndRenderManhwa();
+}
+
+function getFilteredAnime() {
+  let data = [...ANIME_DATA];
+  if (currentFilter === 'completed') data = data.filter(x => x.completed && !x.isMovie);
+  else if (currentFilter === 'ongoing') data = data.filter(x => !x.completed && !x.isMovie);
+  else if (currentFilter === 'movie') data = data.filter(x => x.isMovie);
+  else if (currentFilter === '5star') data = data.filter(x => x.rating >= 5);
+  else if (currentFilter === '4star') data = data.filter(x => x.rating >= 4);
+  if (currentSearch) data = data.filter(x => x.title.toLowerCase().includes(currentSearch) || (x.studio||'').toLowerCase().includes(currentSearch));
+  if (currentSort === 'rating-desc') data.sort((a,b) => (b.rating||0)-(a.rating||0));
+  else if (currentSort === 'rating-asc') data.sort((a,b) => (a.rating||0)-(b.rating||0));
+  else if (currentSort === 'title') data.sort((a,b) => a.title.localeCompare(b.title));
+  else if (currentSort === 'year-desc') data.sort((a,b) => parseInt(b.year||0)-parseInt(a.year||0));
+  return data;
+}
+
+function filterAndRenderAnime() {
+  const data = getFilteredAnime();
+  document.getElementById('anime-showing').textContent = `Showing ${data.length} of ${ANIME_DATA.length}`;
+  const grid = document.getElementById('anime-grid');
+  grid.innerHTML = '';
+  if (data.length === 0) { grid.innerHTML = `<div class="empty"><div class="emoji">🔍</div><div>No results found</div></div>`; return; }
+
+  data.forEach(async item => {
+    const cachedUrl = imgCache[item.title] || '';
+    const card = createCard(item, 'anime', cachedUrl);
+    grid.appendChild(card);
+    if (!cachedUrl) {
+      await new Promise(r => setTimeout(r, 300));
+      const url = await fetchAnimeImg(item.title);
+      if (url) {
+        const img = card.querySelector('.card-img');
+        const ph = card.querySelector('.card-img-placeholder');
+        if (img) { img.src = url; img.style.display='block'; if(ph) ph.style.display='none'; }
+        else {
+          const newImg = document.createElement('img');
+          newImg.className = 'card-img'; newImg.src = url; newImg.alt = item.title;
+          card.insertBefore(newImg, card.firstChild);
+          if(ph) ph.style.display='none';
+        }
+        imgCache[item.title] = url;
+        card.onclick = () => openModal(item, 'anime', url);
+      }
+    }
+  });
+}
+
+function filterAndRenderManhwa() {
+  let data = [...MANHWA_DATA];
+  if (currentFilter === 'read') data = data.filter(x => x.readStatus === 'Read completely');
+  else if (currentFilter === 'partial') data = data.filter(x => x.readStatus === 'Read Partially');
+  else if (currentFilter === 'notread') data = data.filter(x => x.readStatus === 'Not Read yet');
+  else if (currentFilter === '5star') data = data.filter(x => x.rating >= 5);
+  else if (currentFilter === '4star') data = data.filter(x => x.rating >= 4);
+  if (currentSearch) data = data.filter(x => x.title.toLowerCase().includes(currentSearch));
+  if (currentSort === 'rating-desc') data.sort((a,b) => (b.rating||0)-(a.rating||0));
+  else if (currentSort === 'rating-asc') data.sort((a,b) => (a.rating||0)-(b.rating||0));
+  else if (currentSort === 'title') data.sort((a,b) => a.title.localeCompare(b.title));
+
+  document.getElementById('manhwa-showing').textContent = `Showing ${data.length} of ${MANHWA_DATA.length}`;
+  const grid = document.getElementById('manhwa-grid');
+  grid.innerHTML = '';
+  if (data.length === 0) { grid.innerHTML = `<div class="empty"><div class="emoji">🔍</div><div>No results found</div></div>`; return; }
+
+  data.forEach(async item => {
+    const key = 'm_'+item.title;
+    const cachedUrl = imgCache[key] || '';
+    const card = createCard(item, 'manhwa', cachedUrl);
+    grid.appendChild(card);
+    if (!cachedUrl) {
+      await new Promise(r => setTimeout(r, 300));
+      const url = await fetchMangaImg(item.title);
+      if (url) {
+        const img = card.querySelector('.card-img');
+        const ph = card.querySelector('.card-img-placeholder');
+        if (img) { img.src = url; img.style.display='block'; if(ph) ph.style.display='none'; }
+        else {
+          const newImg = document.createElement('img');
+          newImg.className = 'card-img'; newImg.src = url; newImg.alt = item.title;
+          card.insertBefore(newImg, card.firstChild);
+          if(ph) ph.style.display='none';
+        }
+        imgCache[key] = url;
+        card.onclick = () => openModal(item, 'manhwa', url);
+      }
+    }
+  });
+}
+
+function setFilters(tab) {
+  const group = document.getElementById('filterGroup');
+  group.innerHTML = '';
+  let filters = [];
+  if (tab === 'anime') {
+    filters = [
+      {key:'all',label:'All'},
+      {key:'completed',label:'Completed'},
+      {key:'ongoing',label:'Ongoing'},
+      {key:'movie',label:'Movies'},
+      {key:'5star',label:'★ 5'},
+      {key:'4star',label:'★ 4+'},
+    ];
+  } else if (tab === 'manhwa') {
+    filters = [
+      {key:'all',label:'All'},
+      {key:'read',label:'Read'},
+      {key:'partial',label:'Partial'},
+      {key:'notread',label:'Not Read'},
+      {key:'5star',label:'★ 5'},
+      {key:'4star',label:'★ 4+'},
+    ];
+  }
+  currentFilter = 'all';
+  filters.forEach(f => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn' + (f.key === 'all' ? ' active' : '');
+    btn.textContent = f.label;
+    btn.onclick = () => {
+      group.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = f.key;
+      applyFilters();
+    };
+    group.appendChild(btn);
+  });
+}
+
+function switchTab(tab, el) {
+  currentTab = tab;
+  currentFilter = 'all';
+  currentSearch = '';
+  document.getElementById('searchInput').value = '';
+  document.getElementById('sortSelect').value = 'default';
+  currentSort = 'default';
+
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(tab + '-section').classList.add('active');
+
+  setFilters(tab);
+
+  if (tab === 'anime') filterAndRenderAnime();
+  else if (tab === 'manhwa') filterAndRenderManhwa();
+  else if (tab === 'ln') renderLN();
+}
+
+// Init stats bar
+function initStats() {
+  const totalAnime = ANIME_DATA.length;
+  const completed = ANIME_DATA.filter(x => x.completed || x.isMovie).length;
+  const fiveStar = ANIME_DATA.filter(x => x.rating >= 5).length;
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-pill">🎌 <strong>${totalAnime}</strong> Anime</div>
+    <div class="stat-pill">✅ <strong>${completed}</strong> Done</div>
+    <div class="stat-pill">⭐ <strong>${fiveStar}</strong> Masterpieces</div>
+    <div class="stat-pill">📖 <strong>${MANHWA_DATA.length}</strong> Manhwa</div>
+  `;
+  document.getElementById('anime-count').textContent = totalAnime;
+  document.getElementById('manhwa-count').textContent = MANHWA_DATA.length;
+  document.getElementById('ln-count').textContent = LN_DATA.length;
+}
+
+// Boot
+initStats();
+setFilters('anime');
+filterAndRenderAnime();
+</script>
+</body>
+</html>
